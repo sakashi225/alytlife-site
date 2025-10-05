@@ -13,70 +13,39 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v3
 
-      - name: Setup Node.js
+      - name: Set up Node.js
         uses: actions/setup-node@v3
         with:
-          node-version: '20'
+          node-version: 18
 
       - name: Install dependencies
-        run: npm install -g markdown-it fs-extra
-
-      - name: Convert markdown to HTML
         run: |
-          node <<'EOF'
+          npm init -y
+          npm install showdown fs-extra
+
+      - name: Convert Markdown to HTML
+        run: |
+          mkdir -p site/blog
+          node -e "
           const fs = require('fs-extra');
-          const path = require('path');
-          const md = require('markdown-it')();
-          
-          const postsDir = 'site/auto-posts';
-          const blogDir = 'site/blog';
-          
-          fs.ensureDirSync(blogDir);
-          
-          fs.readdirSync(postsDir).forEach(file => {
-            if (!file.endsWith('.md')) return;
-            const mdContent = fs.readFileSync(path.join(postsDir, file), 'utf-8');
-            
-            const frontMatter = mdContent.match(/---\n([\s\S]*?)\n---/);
-            let title = file.replace('.md','');
-            if (frontMatter) {
-              const fm = frontMatter[1];
-              const match = fm.match(/title:\s*(.*)/);
-              if (match) title = match[1].trim();
+          const showdown  = require('showdown');
+          const converter = new showdown.Converter();
+          const files = fs.readdirSync('site/auto-posts');
+          fs.ensureDirSync('site/blog');
+          files.forEach(f => {
+            if (f.endsWith('.md')) {
+              const data = fs.readFileSync('site/auto-posts/' + f, 'utf8');
+              const html = converter.makeHtml(data);
+              const out = '<html><head><link rel=\"stylesheet\" href=\"/style.css\"></head><body>' + html + '</body></html>';
+              fs.writeFileSync('site/blog/' + f.replace('.md', '.html'), out);
             }
-            
-            const content = mdContent.replace(/---[\s\S]*?---/,'').trim();
-            const html = `
-<!DOCTYPE html>
-<html lang="en">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>${title}</title>
-<style>
-body {font-family: 'Lora', serif; background-color: #FAF7F2; max-width: 720px; margin: auto; padding: 2rem; color:#333;}
-h1 {font-family:'Playfair Display', serif; color:#2E2B29;}
-a {color:#B36A5E; text-decoration:none;}
-a:hover{text-decoration:underline;}
-</style>
-</head>
-<body>
-<h1>${title}</h1>
-${md.render(content)}
-<p><a href="/blog">← Back to Blog</a></p>
-</body>
-</html>`;
-            
-            fs.writeFileSync(path.join(blogDir, file.replace('.md','.html')), html);
           });
-          EOF
+          "
 
-      - name: Commit and push HTML
+      - name: Commit and push generated HTML
         run: |
-          git config --local user.name "github-actions"
-          git config --local user.email "github-actions@github.com"
-          git add site/blog/*.html
-          git commit -m "Auto-generated blog posts" || echo "No changes to commit"
+          git config user.name 'github-actions'
+          git config user.email 'actions@github.com'
+          git add site/blog/*.html || true
+          git commit -m 'Auto-generated blog posts' || echo 'No changes to commit'
           git push
-
-
