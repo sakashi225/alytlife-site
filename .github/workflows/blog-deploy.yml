@@ -42,10 +42,8 @@ jobs:
           });
           "
 
-      - name: Commit and push generated HTML
-        run: |
-          git config user.name 'github-actions'
-          git config user.email 'actions@github.com'
-          git add site/blog/*.html || true
-          git commit -m 'Auto-generated blog posts' || echo 'No changes to commit'
-          git push
+      - name: Upload artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: blog-html
+          path: site/blog/
