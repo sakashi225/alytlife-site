@@ -1,9 +1,10 @@
 backend:
-  name: git-gateway
+  name: github
+  repo: JasonLeong/alytlife  # replace with your exact GitHub username/repo
   branch: main
 
-media_folder: "site/images/uploads"
-public_folder: "/images/uploads"
+media_folder: "site/static/img"
+public_folder: "/static/img"
 
 collections:
   - name: "blog"
@@ -12,6 +13,6 @@ collections:
     create: true
     slug: "{{slug}}"
     fields:
-      - {label: "Title", name: "title", widget: "string"}
-      - {label: "Publish Date", name: "date", widget: "datetime"}
-      - {label: "Body", name: "body", widget: "markdown"}
+      - { label: "Title", name: "title", widget: "string" }
+      - { label: "Publish Date", name: "date", widget: "datetime" }
+      - { label: "Body", name: "body", widget: "markdown" }
