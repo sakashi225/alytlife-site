@@ -1,6 +1,6 @@
 backend:
   name: github
-  repo: JasonLeong/alytlife
+  repo: sakashi225/alytlife-site
   branch: main
 
 media_folder: "site/static/img"
