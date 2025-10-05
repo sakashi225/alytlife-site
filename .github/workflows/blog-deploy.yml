@@ -9,12 +9,13 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
+
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: Set up Node.js
-        uses: actions/setup-node@v3
+        uses: actions/setup-node@v4
         with:
           node-version: 18
 
@@ -28,7 +29,7 @@ jobs:
           mkdir -p site/blog
           node -e "
           const fs = require('fs-extra');
-          const showdown  = require('showdown');
+          const showdown = require('showdown');
           const converter = new showdown.Converter();
           const files = fs.readdirSync('site/auto-posts');
           fs.ensureDirSync('site/blog');
@@ -42,8 +43,8 @@ jobs:
           });
           "
 
-      - name: Upload artifact
-        uses: actions/upload-artifact@v3
+      - name: Upload generated HTML
+        uses: actions/upload-artifact@v4
         with:
           name: blog-html
           path: site/blog/
