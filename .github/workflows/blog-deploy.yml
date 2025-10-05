@@ -1,1 +1,82 @@
+name: Auto Blog Deploy
+
+on:
+  push:
+    paths:
+      - 'site/auto-posts/**'
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '20'
+
+      - name: Install dependencies
+        run: npm install -g markdown-it fs-extra
+
+      - name: Convert markdown to HTML
+        run: |
+          node <<'EOF'
+          const fs = require('fs-extra');
+          const path = require('path');
+          const md = require('markdown-it')();
+          
+          const postsDir = 'site/auto-posts';
+          const blogDir = 'site/blog';
+          
+          fs.ensureDirSync(blogDir);
+          
+          fs.readdirSync(postsDir).forEach(file => {
+            if (!file.endsWith('.md')) return;
+            const mdContent = fs.readFileSync(path.join(postsDir, file), 'utf-8');
+            
+            const frontMatter = mdContent.match(/---\n([\s\S]*?)\n---/);
+            let title = file.replace('.md','');
+            if (frontMatter) {
+              const fm = frontMatter[1];
+              const match = fm.match(/title:\s*(.*)/);
+              if (match) title = match[1].trim();
+            }
+            
+            const content = mdContent.replace(/---[\s\S]*?---/,'').trim();
+            const html = `
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>${title}</title>
+<style>
+body {font-family: 'Lora', serif; background-color: #FAF7F2; max-width: 720px; margin: auto; padding: 2rem; color:#333;}
+h1 {font-family:'Playfair Display', serif; color:#2E2B29;}
+a {color:#B36A5E; text-decoration:none;}
+a:hover{text-decoration:underline;}
+</style>
+</head>
+<body>
+<h1>${title}</h1>
+${md.render(content)}
+<p><a href="/blog">← Back to Blog</a></p>
+</body>
+</html>`;
+            
+            fs.writeFileSync(path.join(blogDir, file.replace('.md','.html')), html);
+          });
+          EOF
+
+      - name: Commit and push HTML
+        run: |
+          git config --local user.name "github-actions"
+          git config --local user.email "github-actions@github.com"
+          git add site/blog/*.html
+          git commit -m "Auto-generated blog posts" || echo "No changes to commit"
+          git push
+
 
