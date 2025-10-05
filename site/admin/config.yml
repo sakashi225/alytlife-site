@@ -1,6 +1,6 @@
 backend:
   name: github
-  repo: JasonLeong/alytlife  # replace with your exact GitHub username/repo
+  repo: JasonLeong/alytlife
   branch: main
 
 media_folder: "site/static/img"
